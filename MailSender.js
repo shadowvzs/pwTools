@@ -1,6 +1,6 @@
-const { WritePacket } = require('./packet.js');
+const { WritePacket } = require('./Packets.js');
 
-class mailSender extends WritePacket {
+class MailSender extends WritePacket {
 	
 	constructor(net, mailOptions) {
 		
@@ -12,13 +12,13 @@ class mailSender extends WritePacket {
 		super(net, mailOptions, callbacks);
 		this.senderId = 32;
 		this.targetId = 1024;
-		this.title = "Test Title"
+		this.title = "Test Title";
 		this.msg = "Test Message";
 		this.itemId = 0;
 		this.count = 0;
 		this.maxCount = 0;
-		this.octet = ""
-		this.proctype = 0
+		this.octet = "";
+		this.proctype = 0;
 		this.expire = 0;
 		this.guid1 = 0;
 		this.guid2 = 0;
@@ -29,7 +29,7 @@ class mailSender extends WritePacket {
 	}
 
 	update(data) {
-		Object.keys(data).forEach(e => this[e] && (this[e] = data[e]) );
+		Object.keys(data).forEach(e => this.hasOwnProperty(e) && (this[e] = data[e]) );
 	}
 	
 	sendGold(targetId, gold, title, msg) {
@@ -60,11 +60,9 @@ class mailSender extends WritePacket {
 		this.WriteUInt32(this.guid2);						  	  // guid2
 		this.WriteUInt32(this.mask);						  	  // mask
 		this.WriteUInt32(this.gold);						      // gold
-		this.Pack([144, 118]);							  		  // pack opcode and length
+		this.Pack(0x1076);							  			  // pack opcode and length
 		this.SendPacket();	
-		console.log(this.data.join('-'));
-			
 	}
 }
 
-module.exports = mailSender;
+module.exports = MailSender;

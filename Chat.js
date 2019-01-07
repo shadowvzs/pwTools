@@ -1,4 +1,4 @@
-const { WritePacket } = require('./packet.js');
+const { WritePacket } = require('./Packets.js');
 
 class chatSender extends WritePacket {
 	

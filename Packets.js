@@ -9,7 +9,7 @@ class WritePacket {
 		this.client.on('data', data => {		// callback when we get answer
 			// if we forget to destroy the instance then it will listen to server
 			// but maybe we don't want call the callback if not needed
-			if (!this.history) {
+			if (!this.history.response) {
 				this.history.response = data;
 				return (success && success(data));
 			}			
@@ -27,6 +27,12 @@ class WritePacket {
 	Destroy() {
 		this.client.destroy();
 	}
+	
+	// split hexadec string into byte array
+	format(buf) {
+		return buf.toString('hex').match(/.{2}/g).map(e => "0x"+e)
+	}
+	
 
 	// write more byte, like 0x00
 	WriteBytes(value, method = "push") {
@@ -37,21 +43,24 @@ class WritePacket {
 	// convert integer to byte
 	WriteUByte(value, method = "push") {
 		const buf = Buffer.allocUnsafe(1);
+		value === -1 && (value = 0xff);
 		buf.writeUInt8(value, 0);
 		this.data[method](...this.format(buf));
 	}
-	
+
 	// write 2 byte, ex: 00 00
 	WriteUInt16(value, method = "push") {
-		const buf = Buffer.allocUnsafe(4);
-		buf.writeInt16BE(value, 0);
+		const buf = Buffer.allocUnsafe(2);
+		value === -1 && (value = 0xffff);
+		buf.writeUInt16BE(value, 0);
 		this.data[method](...this.format(buf));
 	}
 
 	// write 4 byte, ex: 00 00 00 00
 	WriteUInt32(value, method = "push") {
 		const buf = Buffer.allocUnsafe(4);
-		buf.writeInt32BE(value, 0);
+		value === -1 && (value = 0xffffffff);
+		buf.writeUInt32BE(value, 0);
 		this.data[method](...this.format(buf));
 	}
 
@@ -64,22 +73,20 @@ class WritePacket {
 	
 	// split octet into bytes
 	WriteOctets(value = "") {
-		const byteLength = value.length / 2;
 		if (value && value.match(/[0-9A-Fa-f]{6}/g)) {
-			console.log("HEXA OCTET")	
-			// old version	
-			// value = pack("H*", value);
-			// Hex string, high nibble first
-		}
-		this.CUInt(byteLength);
-		if (value && byteLength) {
-			this.data.push(...value.match(/.{2}/g));
+			const byteLength = value.length / 2;
+			this.WriteUInt16(32768 + byteLength);
+			this.data.push(...value.match(/.{2}/g).map(e => '0x'+e));
+		} else {
+			this.CUInt(0);
 		}
 	}
 	
 	// convert string into bytes, ex: utf8 - 0a, utf16le - 00 0a
 	WriteUString(value = "", coding = "utf16le") {
-		if (!value) { return this.CUInt(buf.length); }
+		if (!value) {
+			return this.WriteUByte(0);
+		}
 		const buf = this.format(Buffer.from(value, coding));
 		this.CUInt(buf.length);
 		this.data.push(...buf);
@@ -90,20 +97,23 @@ class WritePacket {
 		this.CUInt(value);
 	}
 	
-	// split hexadec string into byte array
-	format(buf) {
-		return buf.toString('hex').match(/.{2}/g).map(e => "0x"+e)
-	}
-	
+	// convert number ( could be 1, 2 or 4 byte) 
+	CUInt(value, method = "push") {
+		if (value <= 0x7F) { 
+			return this.WriteUByte(value, method);
+		} else if (value <= 0x3FFF) {
+			return this.WriteUInt16(value + 0x8000, method);
+		} else if ($value <= 0x1FFFFFFF) {
+			return this.WriteUInt32(value + 0xC0000000, method);
+		} else {
+			return this.WriteBytes(0xE0, method) || this.WriteUInt32(value, method);
+		}
+	}	
 	// insert opcode and length to the begining of data
 	Pack(value) {
 		const len = this.data.length;
 		this.CUInt(len, "unshift");
-		if (typeof value === "object") {
-			value.reverse().forEach(e => this.WriteUByte(e, "unshift"));
-		} else {
-			this.CUInt(value, "unshift");
-		}
+		this.CUInt(value, "unshift");
 	}
 
 	// send data to server if we can, else add to queue list
@@ -124,18 +134,6 @@ class WritePacket {
 		}
 	}
 	
-	// convert number ( could be 1, 2 or 4 byte) 
-	CUInt(value, method = "push") {
-		if (value <= 0x7F) { 
-			return this.WriteUByte(value, method);
-		} else if (value <= 0x3FFF) {
-			return this.WriteUInt16(value, method);
-		} else if ($value <= 0x1FFFFFFF) {
-			return this.WriteUInt32(value, method);
-		} else {
-			return this.WriteUByte(224, method) || this.WriteUInt32(value, method);
-		}
-	}
 }
 
 /* ReadPackets not done !!!! */
@@ -143,71 +141,64 @@ class WritePacket {
 class ReadPacket {
 
 	constructor(data = null) {
-		this.data = Buffer.from(data, 'binary');
-			//const n = Buffer.from(data, 'binary');                
-			//const resp = new ReadPacket(data);
-			//console.log(n.toString('utf16le',0));		
-        this.pos = null;
+		this.buf = Buffer.from(data, 'binary');
+        this.pos = 0;
 	}
 	
 	ReadBytes(length) {
-		value = substr(this.data, this.pos, length);
+		const data = this.buf.toString('hex', this.pos, this.pos+length).match(/.{2}/g);
 		this.pos += length;
-		
-		return value;
+		return data;
 	}
 	
+	// read out a single byte and increase position by 1
 	ReadUByte() {
-		value = unpack("C", this.data.substr(this.pos, 1));
+		const data = this.buf.readUInt8(this.pos);
 		this.pos++;
-		
-		return value[1];
+		return data;
 	}
 	
-        ReadFloat() {
-		value = unpack("f", strrev(this.data.substr(this.pos, 4)));
+    ReadFloat() {
+		const data = this.buf.readFloatLE(this.pos);
 		this.pos += 4;
 		
-		return value[1];
+		return data;
 	}
-	
-	ReadUInt32() {
-		value = unpack("N", this.data.substr(this.pos, 4));
-		this.pos += 4;
-		
-		return value[1];
-	}
-	
+
+	// read out a unsigner integer (2byte) and increase position by 2 - big endian
 	ReadUInt16() {
-		value = unpack("n", this.data.substr(this.pos, 2));
+		const data = this.buf.readUInt16BE(this.pos);
 		this.pos += 2;
-		
-		return value[1];
+		return data;
 	}
 	
+	// read out a unsigner integer (4byte) and increase position by 4 - big endian
+	ReadUInt32() {
+		const data = this.buf.readUInt32BE(this.pos);
+		this.pos += 4;
+		return data;
+	}
 	
+	// read out octets (first number is the length, then we extract string in hexdec form)
 	ReadOctets() {
-		length = this.ReadCUInt32();
-	
-		value = unpack("H*", this.data.substr(this.pos, length));
+		const length = this.ReadCUInt32(),
+			data = this.buf.toString('hex', this.pos, this.pos+length);
 		this.pos += length;
-		
-		return value[1];
+		return data;
 	}
 	
 	ReadUString() {
-		length = this.ReadCUInt32();
-	
-		value = iconv("UTF-16", "UTF-8", this.data.substr(this.pos, length)); // LE?
+		const length = this.ReadCUInt32(),
+			data = this.buf.toString('utf16le', this.pos, this.pos+length);
 		this.pos += length;
-		
-		return value;
+		return data;
 	}
 	
 	ReadPacketInfo() {
-		packetinfo['Opcode'] = this.ReadCUInt32();
-		packetinfo['Length'] = this.ReadCUInt32();
-		return packetinfo;
+		return {
+			Opcode: this.ReadCUInt32(),
+			Length: this.ReadCUInt32()
+		};
 	}
 	
 	Seek(value) {
@@ -215,27 +206,19 @@ class ReadPacket {
 	}
 	
 	ReadCUInt32() {
-		value = unpack("C", this.data.substr(this.pos, 1));
-		value = value[1];
-		this.pos++;
-		
-		switch(value & 0xE0)
-		{
+		let value = this.ReadUByte();
+		switch(value & 0xE0) {
 			case 0xE0:
-				value = unpack("N", this.data.substr(this.pos, 4));
-				value = value[1];
-				this.pos += 4;
+				value = this.ReadUInt32();
 				break;
 			case 0xC0:
-				value = unpack("N", this.data.substr(this.pos - 1, 4));
-				value = value[1] & 0x1FFFFFFF;
-				this.pos += 3;
+				this.pos--;
+				value = this.ReadUInt32() & 0x1FFFFFFF;
 				break;
 			case 0x80:
 			case 0xA0:
-				value = unpack("n", this.data.substr(this.pos - 1, 2));
-				value = value[1] & 0x3FFF;
-				this.pos++;
+				this.pos--;
+				value = (this.ReadUInt16()) & 0x3FFF;
 				break;
 		}
 		
