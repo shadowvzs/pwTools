@@ -2,14 +2,15 @@ const { WritePacket } = require('./Packets.js');
 
 class MailSender extends WritePacket {
 	
-	constructor(net, mailOptions) {
+	constructor(mailOptions = null) {
 		
 		const callbacks = {
 			success: _ => console.log('Every mail sent'),
 			error: _ => console.log('Sending error')
-		}
+		};
+			
+		super(29100, callbacks);
 		
-		super(net, mailOptions, callbacks);
 		this.senderId = 32;
 		this.targetId = 1024;
 		this.title = "Test Title";
@@ -24,7 +25,7 @@ class MailSender extends WritePacket {
 		this.guid2 = 0;
 		this.mask = 0;
 		this.gold = 0;
-		this.update(mailOptions);
+		mailOptions && this.update(mailOptions);
 
 	}
 

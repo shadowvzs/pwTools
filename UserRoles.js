@@ -3,14 +3,14 @@ const { userRoleScheme } = require('./schemes/userScheme.js');
 
 class UserRoles extends WritePacket {
 	
-	constructor(net, userOptions) {
+	constructor(userOptions) {
 		
 		const callbacks = {
 			success: data => this._extractUserRoles(data),
 			error: _ => { throw 'Something went wrong during packet sending!' }
 		}
 		
-		super(net, userOptions, callbacks);
+		super(29400, callbacks);
 		this.userId = userOptions.userId || 32;
 	}
 	

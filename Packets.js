@@ -1,12 +1,16 @@
+const net = require('net');
+const host = "127.0.0.1";
+
 class WritePacket {
 
-	constructor(net, options = null, { success = null, error = null } = {}) {           
+	constructor(port = null, { success = null, error = null } = {}) {
 		this.queue = [];	// queue list if too much packet
 		this.busy = false;	// sending status
 		this.data = [];		// current binary packet array
 		this.history = { request: [], response: null };	// last sent data and response
-		this.client = net.connect(options);		// open connection between server and client
-		this.client.on('data', data => {		// callback when we get answer
+		this.client = net.connect({ host, port });		// open connection between server and client
+		// callback when we get answer
+		this.client.on('data', data => {		
 			// if we forget to destroy the instance then it will listen to server
 			// but maybe we don't want call the callback if not needed
 			if (!this.history.response) {

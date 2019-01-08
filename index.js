@@ -1,5 +1,3 @@
-const net = require('net');
-
 const { WritePacket, ReadPacket } = require('./Packets.js');
 
 
@@ -7,46 +5,36 @@ const { WritePacket, ReadPacket } = require('./Packets.js');
 const UserRoles = require('./UserRoles.js');
 const Role = require('./Role.js');
 
-const userOptions = {
-	host: '127.0.0.1',
-	port: 29400,
-	userId: 32
-};
 
-async function main() { 
-	let roles = [], 
-		rolesData = [];
+async function main(userId = 32) { 
+	let userRoles = [], 
+		roles = [];
 	try {
-		roles = await (new Promise( res => new UserRoles(net, userOptions).send(res) ));
-		console.log(roles)
-		rolesData = Promise.all(
-			roles.map( async role => { 
-				return await (new Promise( res => new Role(net, userOptions).load(res, role.id) ))
-			})
+		// list the roles from current user
+		userRoles = await (new Promise( res => new UserRoles({userId}).send(res) ));
+		// we send each promise async and if all done then continue (promise.all faster than await in loop )
+		roles = await Promise.all(
+			userRoles.map( role => (new Promise( res => new Role(res, role.id) )))
 		);
-		
+		console.log(roles);
 	} catch (err) {
 		console.log(err,'error');
 	}
 
-	console.log(roles)	
 }
 
-main();
-
-//myPromise.then(console.log)
+main(32);
 
 /*
 const MailSender = require('./MailSender.js');
 
-const mailOptions = {
-	host: '127.0.0.1',
-	port: 29100,
-	roleId: 1024,
-	msg: ""
-};
+const v = new MailSender({ roleId: 1024 } );
 
+v.send(1024, "my title", "this is a simple mail");
 
+v.sendGold(1024, 2000, "my title", "this is a mail with 2k gold");
+
+// send item too
 const newMailOptions = {
 	senderId: 32,
 	targetId: 1024,
@@ -64,43 +52,16 @@ const newMailOptions = {
 	gold: 3333
 };
 
-
-const v = new MailSender(net, mailOptions);
-
-v.send(1024, "my title", "this is a simple mail");
-v.sendGold(1024, 2000, "my title", "this is a mail with 2k gold");
-// send item too
 v.update(newMailOptions);
 v.send();
-*/
 
-// --------- CHAT ----------
-
-/*
-0 - Normal white
-1 - World yellow
-2 - Party
-3 - Guild
-4 - ??? Blue
-6 - ??? Orange
-7 - Trade
-9 - System red
-10 - ??? Blue
-12 - Horn
 */
 
 /*
 
 const ChatSender = require('./Chat.js');
 
-const chatOptions = {
-	host: '127.0.0.1',
-	port: 29300,
-	roleId: 1024,
-	channelId: 9
-}
-
-const chat = new ChatSender(net, chatOptions);
+const chat = new ChatSender(1024);
 chat.sendMsg("test1");
 chat.sendMsg("test2", 1);
 chat.sendMsg("test3", 3, 1024);
