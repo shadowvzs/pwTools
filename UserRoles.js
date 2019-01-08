@@ -3,7 +3,7 @@ const { userRoleScheme } = require('./schemes/userScheme.js');
 
 class UserRoles extends WritePacket {
 	
-	constructor(userOptions) {
+	constructor(resolve = null, userId = null) {
 		
 		const callbacks = {
 			success: data => this._extractUserRoles(data),
@@ -11,24 +11,21 @@ class UserRoles extends WritePacket {
 		}
 		
 		super(29400, callbacks);
-		this.userId = userOptions.userId || 32;
+		this.userId = userId || 32;
+		resolve && userId && this.load(resolve);
 	}
 	
 	_extractUserRoles(data) {
 		const user = (new ReadPacket(data)).Unpack(userRoleScheme);
 		if (!user.error) {
-			this.resolve(user.base.roles.items);
+			return this.resolve(user.base.roles.items);
 		} else {
 			// we have a nice error here
 		}
 	}
 	
-	send(resolve) {
+	load(resolve) {
 		this.resolve = resolve;
-		this._send();
-	}
-	
-	_send() {
 		this.data = [];
 		this.WriteUInt32(-1); 							  		// allways
 		this.WriteUInt32(this.userId)		  					// senderId

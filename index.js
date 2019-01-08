@@ -11,12 +11,12 @@ async function main(userId = 32) {
 		roles = [];
 	try {
 		// list the roles from current user
-		userRoles = await (new Promise( res => new UserRoles({userId}).send(res) ));
+		userRoles = await (new Promise( res => new UserRoles(res, userId) ));
 		// we send each promise async and if all done then continue (promise.all faster than await in loop )
 		roles = await Promise.all(
-			userRoles.map( role => (new Promise( res => new Role(res, role.id) )))
+			userRoles.map( role => new Promise( res => new Role(res, role.id) ))
 		);
-		console.log(roles);
+		// console.log(roles);
 	} catch (err) {
 		console.log(err,'error');
 	}
