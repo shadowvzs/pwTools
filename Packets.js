@@ -224,6 +224,25 @@ class ReadPacket {
 		
 		return value;
 	}
+	
+	readArray(scheme) {
+		const schemeClone = [...scheme];	//since not exist reference value in array this cloning is enough
+		const length = this.readPacket['Read'+schemeClone.shift()[1]]();
+		const items = [];
+	
+		for(let i = 0; i < length; i++) {
+			const item = schemeClone.reduce((item, [name, type]) => {
+				item[name] = this.readPacket['Read'+type]();
+				return item;
+			}, {});
+			items.push(item);
+		}	
+		
+		return {
+			length: length,
+			items
+		};		
+	}	
 }
 
 

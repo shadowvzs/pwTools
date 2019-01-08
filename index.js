@@ -21,7 +21,7 @@ async function main() {
 		console.log('roles: ', roles)
 		rolesData = Promise.all(
 			roles.map( async role => { 
-				return await (new Promise( res => new Role(net, userOptions).send(res, role.id) ))
+				return await (new Promise( res => new Role(net, userOptions).load(res, role.id) ))
 			})
 		);
 	} catch (err) {
