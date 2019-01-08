@@ -27,15 +27,12 @@ class Role extends WritePacket {
 			const roleCat = role[keys];
 
 			for (const [name, type] of roleScheme[keys]) {
+				
 				if (typeof type === "string") {
 					roleCat[name] = readPacket[`Read${type}`]();
 				} else {
-					let [subName, subScheme, dLen = null] = type;
-					if (dLen && typeof dLen === "object" && dLen.length) {
-						dLen = dLen.reduce((obj, e) => obj[e]);
-					}
-					
-					roleCat[name] = this['read'+subName](subScheme, dLen);
+					let [subName, subScheme] = type;
+					roleCat[name] = readPacket.ReadArray(subScheme);
 				}
 			}
 		}

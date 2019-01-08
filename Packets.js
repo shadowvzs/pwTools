@@ -140,6 +140,7 @@ class WritePacket {
 
 class ReadPacket {
 
+	// create a bufer from data
 	constructor(data = null) {
 		this.buf = Buffer.from(data, 'binary');
         this.pos = 0;
@@ -225,14 +226,15 @@ class ReadPacket {
 		return value;
 	}
 	
-	readArray(scheme) {
-		const schemeClone = [...scheme];	//since not exist reference value in array this cloning is enough
-		const length = this.readPacket['Read'+schemeClone.shift()[1]]();
+	ReadArray(scheme) {
+		//since not exist reference value in array this cloning is enough
+		const schemeClone = [...scheme];
+		const length = this['Read'+schemeClone.shift()[1]]();
 		const items = [];
 	
 		for(let i = 0; i < length; i++) {
 			const item = schemeClone.reduce((item, [name, type]) => {
-				item[name] = this.readPacket['Read'+type]();
+				item[name] = this['Read'+type]();
 				return item;
 			}, {});
 			items.push(item);
