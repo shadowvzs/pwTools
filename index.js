@@ -18,12 +18,13 @@ async function main() {
 		rolesData = [];
 	try {
 		roles = await (new Promise( res => new UserRoles(net, userOptions).send(res) ));
-		console.log('roles: ', roles)
+		console.log(roles)
 		rolesData = Promise.all(
 			roles.map( async role => { 
 				return await (new Promise( res => new Role(net, userOptions).load(res, role.id) ))
 			})
 		);
+		
 	} catch (err) {
 		console.log(err,'error');
 	}

@@ -21,6 +21,12 @@ const forbiddenScheme = [
 ];
 
 const roleScheme = {
+	protocol: [
+		[ "op_code", "CUInt32" ],
+		[ "length", "CUInt32" ],
+		[ "unknown1", "UInt32" ],
+		[ "ret_code", "UInt32" ],
+	],
 	base: [
 		[ "version", "UByte" ],
 		[ "id", "UInt32" ],

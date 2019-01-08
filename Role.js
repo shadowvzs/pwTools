@@ -1,5 +1,5 @@
 const { WritePacket, ReadPacket } = require('./Packets.js');
-const roleScheme = require('./RoleStructure.js');
+const roleScheme = require('./schemes/roleScheme.js');
 
 class Role extends WritePacket {
 	
@@ -14,29 +14,12 @@ class Role extends WritePacket {
 	}
 	
 	_extractRole(data) {
-		const role = {};
-		const readPacket = new ReadPacket(data);
-		this.readPacket = readPacket;
-		readPacket.ReadPacketInfo();	  // opcode & length not used
-		readPacket.ReadUInt32();		  // allways
-		readPacket.ReadUInt32();		  // ret code
-		
-		for (const keys in roleScheme) {
-			
-			role[keys] = {};
-			const roleCat = role[keys];
-
-			for (const [name, type] of roleScheme[keys]) {
-				
-				if (typeof type === "string") {
-					roleCat[name] = readPacket[`Read${type}`]();
-				} else {
-					let [subName, subScheme] = type;
-					roleCat[name] = readPacket.ReadArray(subScheme);
-				}
-			}
+		const role = (new ReadPacket(data)).Unpack(roleScheme);
+		if (!role.error) {
+			console.log('success, this is the user data', role);
+		} else {
+			// we have an error :)
 		}
-		console.log(role.base);
 	}
 	
 	load(resolve, roleId) {

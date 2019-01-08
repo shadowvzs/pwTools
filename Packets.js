@@ -188,6 +188,7 @@ class ReadPacket {
 		return data;
 	}
 	
+	// read out utf16 string
 	ReadUString() {
 		const length = this.ReadCUInt32(),
 			data = this.buf.toString('utf16le', this.pos, this.pos+length);
@@ -195,17 +196,7 @@ class ReadPacket {
 		return data;
 	}
 	
-	ReadPacketInfo() {
-		return {
-			Opcode: this.ReadCUInt32(),
-			Length: this.ReadCUInt32()
-		};
-	}
-	
-	Seek(value) {
-		this.pos += value;
-	}
-	
+	// read dynamic length data
 	ReadCUInt32() {
 		let value = this.ReadUByte();
 		switch(value & 0xE0) {
@@ -226,12 +217,13 @@ class ReadPacket {
 		return value;
 	}
 	
+	// read array based on scheme/structure
 	ReadArray(scheme) {
 		//since not exist reference value in array this cloning is enough
 		const schemeClone = [...scheme];
 		const length = this['Read'+schemeClone.shift()[1]]();
 		const items = [];
-	
+
 		for(let i = 0; i < length; i++) {
 			const item = schemeClone.reduce((item, [name, type]) => {
 				item[name] = this['Read'+type]();
@@ -239,12 +231,42 @@ class ReadPacket {
 			}, {});
 			items.push(item);
 		}	
-		
+
 		return {
 			length: length,
 			items
 		};		
 	}	
+	
+		
+	Seek(value) {
+		this.pos += value;
+	}
+	
+	Unpack(scheme, data = null) {
+		const result = {};
+
+		for (const keys in scheme) {
+			result[keys] = {};
+			const prop = result[keys];
+			
+				for (const [name, type] of scheme[keys]) {
+					try {
+						prop[name] = typeof type === "string" 
+							? this[`Read${type}`]() 
+							: this.ReadArray(type[1]);
+					} catch (err) {
+						return {
+							error: err,
+							key: keys,
+							name: name
+						}
+					}
+				}
+			
+		}
+		return result;
+	}
 }
 
 
