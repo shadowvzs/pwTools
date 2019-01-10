@@ -3,35 +3,12 @@ const host = "127.0.0.1";
 
 class WritePacket {
 
-	constructor(port = null, { success = null, error = null } = {}) {
+	constructor(port = null) {
 		this.queue = [];	// queue list if too much packet
-		this.busy = false;	// sending status
 		this.data = [];		// current binary packet array
-		this.history = { request: [], response: null };	// last sent data and response
 		this.client = net.connect({ host, port });		// open connection between server and client
-		// callback when we get answer
-		this.client.on('data', data => {		
-			// if we forget to destroy the instance then it will listen to server
-			// but maybe we don't want call the callback if not needed
-			if (!this.history.response) {
-				this.history.response = data;
-				return (success && success(data));
-			}			
-		});
-		this.client.on('error', data => {		// if error handler
-			this.data = [];
-			return error(err || 'Error: Cannot connect to server'); 
-		});
-		
-		this.SendNext = this.SendNext.bind(this);
-	 
 	}
 
-	// destroy connection
-	Destroy() {
-		this.client.destroy();
-	}
-	
 	// split hexadec string into byte array
 	format(buf) {
 		return buf.toString('hex').match(/.{2}/g).map(e => "0x"+e)
@@ -71,18 +48,18 @@ class WritePacket {
 	// convert float to byte, 4 byte, ex: 00 00 00 00
 	WriteFloat(value, method = "push") {
 		const buf = Buffer.allocUnsafe(4);
-		buf.writeFloatLE(value, 0);
-		this.data[method](...this.format(buf).reverse());
+		buf.writeFloatBE(value, 0);
+		this.data[method](...this.format(buf));
 	}
 	
 	// split octet into bytes
 	WriteOctets(value = "") {
-		if (value && value.match(/[0-9A-Fa-f]{6}/g)) {
-			const byteLength = value.length / 2;
-			this.WriteUInt16(32768 + byteLength);
-			this.data.push(...value.match(/.{2}/g).map(e => '0x'+e));
+		if (value && value.match(/[0-9A-Fa-f]/g)) {
+			value = value.match(/.{2}/g).map(e => '0x'+e);
+			this.WriteCUInt32(value.length);
+			this.data.push(...value);
 		} else {
-			this.CUInt(0);
+			this.WriteCUInt32(0);
 		}
 	}
 	
@@ -92,17 +69,13 @@ class WritePacket {
 			return this.WriteUByte(0);
 		}
 		const buf = this.format(Buffer.from(value, coding));
-		this.CUInt(buf.length);
+		this.WriteCUInt32(buf.length);
 		this.data.push(...buf);
 	}
 	
-	// dynamic data, depend on values, could be 1,2,4 byte
-	WriteCUInt32(value) {
-		this.CUInt(value);
-	}
-	
 	// convert number ( could be 1, 2 or 4 byte) 
-	CUInt(value, method = "push") {
+	WriteCUInt32(value, method = "push") {
+
 		if (value <= 0x7F) { 
 			return this.WriteUByte(value, method);
 		} else if (value <= 0x3FFF) {
@@ -110,38 +83,76 @@ class WritePacket {
 		} else if ($value <= 0x1FFFFFFF) {
 			return this.WriteUInt32(value + 0xC0000000, method);
 		} else {
-			return this.WriteBytes(0xE0, method) || this.WriteUInt32(value, method);
+			return this.WriteUByte653(0xE0, method) || this.WriteUInt32(value, method);
 		}
-	}	
+	}
+	
 	// insert opcode and length to the begining of data
 	Pack(value) {
 		const len = this.data.length;
-		this.CUInt(len, "unshift");
-		this.CUInt(value, "unshift");
+		this.WriteCUInt32(len, "unshift");
+		this.WriteCUInt32(value, "unshift");
+	}
+
+	// write array based on array scheme and data
+	WriteArray(scheme, data) {
+		// first we save the array length
+		this.WriteCUInt32(data.length);
+		for (const item of data) {
+			for (const [name, type] of scheme) {
+				// length used only for read
+				if (name === "length") { continue; }
+				this['Write'+type](item[name]);
+			}
+		}
+	}
+	
+	// packall common data (few init data from protocol is exception)
+	PackAll(scheme, data, protocol) {
+		// we ignore the protocol from scheme, acctually it was used only for read
+		const keys = Object.keys(scheme).shift();
+		delete data.protocol;
+
+		for (const category in scheme) {
+
+			if (category === "protocol") { continue; }
+			const fields = scheme[category];
+			for (const [field, type] of fields) {
+				const value = data[category][field];
+				if (typeof type === "string") {
+					this['Write'+type](value);
+				} else {
+					// type[1] is the scheme array for that array 
+					this.WriteArray(type[1], value);
+				}
+			}
+		}
+		this.Pack(protocol);
+		return this.Send();
 	}
 
 	// send data to server if we can, else add to queue list
-	SendPacket() {
-		this.busy 
-			? this.queue.push(this.data) 
-			: this.client.write(Buffer.from(this.data), 'utf8', this.SendNext);
-		this.busy = true;
-	}
-	
-	// send next data from queue list
-	SendNext() {
-		this.busy = false
-		this.history.request.push(Buffer.from(this.data));		
-		if (this.queue && this.queue.length > 0) {
-			this.data = this.queue.shift();
-			this.SendPacket();
-		}
+	Send() {
+		return new Promise((resolve, reject) => {
+			this.client.write(Buffer.from(this.data), 'utf8');
+			// callback when we get answer
+			this.client.on('data', data => { 
+				this.client.destroy(); 
+				return resolve(data); 
+			});
+			// if error handler
+			this.client.on('error', data => {
+				this.client.destroy(); 
+				return reject(err || 'Error: Cannot connect to server');
+			});			
+		});
 	}
 	
 }
 
 /* ReadPackets not done !!!! */
-
+// 3203 1731
+// 3200 1730
 class ReadPacket {
 
 	// create a bufer from data
@@ -164,10 +175,10 @@ class ReadPacket {
 	}
 	
     ReadFloat() {
-		const data = this.buf.readFloatLE(this.pos);
+		const data = this.buf.readFloatBE(this.pos);
 		this.pos += 4;
 		
-		return data;
+		return data.toFixed(4);;
 	}
 
 	// read out a unsigner integer (2byte) and increase position by 2 - big endian
@@ -236,18 +247,14 @@ class ReadPacket {
 			items.push(item);
 		}	
 
-		return {
-			length: length,
-			items
-		};		
+		return items;		
 	}	
-	
 		
 	Seek(value) {
 		this.pos += value;
 	}
 	
-	Unpack(scheme, data = null) {
+	UnpackAll(scheme, data = null) {
 		const result = {};
 
 		for (const keys in scheme) {

@@ -32,7 +32,7 @@ const roleScheme = {
 		[ "id", "UInt32" ],
 		[ "name", "UString" ],
 		[ "race", "UInt32" ],
-		[ "class", "UInt32" ],
+		[ "cls", "UInt32" ],
 		[ "gender", "UByte" ],
 		[ "custom_data", "Octets" ],
 		[ "config_data", "Octets" ],

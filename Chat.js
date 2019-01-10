@@ -14,20 +14,12 @@ const { WritePacket } = require('./Packets.js');
 		12 - Horn
 */
 
-class chatSender extends WritePacket {
+class Chat {
 	
 	constructor(roleId) {
-		
-		const callbacks = {
-			success: _ => { console.log('All message sent'); this.Destroy(); },
-			error: _ => { console.log('Sending error'); this.Destroy(); }
-		}
-		
-		super(29300, callbacks);
 		this.channelId = 9;
 		this.roleId = roleId || 0;
 		this.emoticonId = 0;
-		
 	}
 	
 	setChannel(id) {
@@ -38,20 +30,17 @@ class chatSender extends WritePacket {
 		this.roleId = id;
 	}
 	
-	sendMsg(msg, channelId = null, roleId = null) {
-		this.send(msg, channelId || this.channelId, roleId || this.roleId);
-	}	
-	
 	send(msg, channelId, roleId) {
-		this.data = [];
-		this.WriteUByte(channelId);
-		this.WriteUByte(this.emoticonId);
-		this.WriteUInt32(roleId);
-		this.WriteUString(msg);
-		this.WriteOctets("");
-		this.Pack(120);
-		this.SendPacket();				
+		const packet = new WritePacket(29300);			
+		packet.WriteUByte(channelId || this.channelId)		// roleId
+		packet.WriteUByte(this.emoticonId)		  			// roleId
+		packet.WriteUInt32(roleId || this.roleId)		  	// roleId
+		packet.WriteUString(msg)		  					// roleId
+		packet.WriteOctets(""); 							// allways
+		packet.Pack(0x78);							  		// pack opcode and length
+		packet.Send();
+		console.log(this.roleId, ' send '+msg);	
 	}
 }
 
-module.exports = chatSender;
+module.exports = Chat;

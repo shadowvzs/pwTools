@@ -4,7 +4,7 @@ const userRoleList = [
 	[ "name", "UString" ]
 ];
 
-const userRoleScheme = {
+const userRoleListScheme = {
 	protocol: [
 		[ "op_code", "CUInt32" ],
 		[ "length", "CUInt32" ],
@@ -17,5 +17,5 @@ const userRoleScheme = {
 };
 		
 module.exports = {
-	userRoleScheme: userRoleScheme
+	userRoleListScheme: userRoleListScheme
 };
