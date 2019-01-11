@@ -3,6 +3,10 @@ const { WritePacket, ReadPacket } = require('./Packets.js');
 
 async function main(userId = 32) { 
 	try {
+		const GuildComponent = require('./Guild.js');
+		const Guild = new GuildComponent();
+		const guildLists = await Guild.getGuilds();
+		console.log(guildLists[2]);
 
 		// list online players (user_id, role_id, name etc)
 		// const GMComponent = require('./GM.js');
@@ -17,8 +21,8 @@ async function main(userId = 32) {
 		// console.log(roleList);
 		// User.setGold(5000);
 		
-		// const RoleComponent = require('./Role.js');
-		// const Role = new RoleComponent(1047);
+		//const RoleComponent = require('./Role.js');
+		//const Role = new RoleComponent(1030);
 		// ban this role
 		// Role.ban();
 		// time, type, reason. gm id (could be -1 too)
@@ -27,10 +31,11 @@ async function main(userId = 32) {
 		// this example for load role data
 		// or const role = await Role.load();
 		//await Role.load();
-		
+		//console.log(Role.data.role.base)
 		// this example for change user inventory gold then save
-		//Role.data.role.inventory.gold = 8000;
-		//Role.data.role.status.level = 6;
+		//Role.data.role.inventory.gold = 10000000;
+		//Role.data.role.status.level = 50;
+		//Role.data.role.status.pp = 250;
 		// 6lv = 25 str 0 stat else crash - con int str agi hp mp 
 		//Role.data.role.status.property = "190000000500000005000000050000004b0000002d0000000300000002000000000000400000a040000040400000a04000000000010000000100000010000000000020400000000000000000000000000000000000000000000000000000000000000000000000000000000001000000010000000000000000000000000000000000000000000000010000000000000000000000";
 		//Role.save();
@@ -44,7 +49,7 @@ async function main(userId = 32) {
 		// if you want do more async action same time for an object then use promise all
 		//await Promise.all([User.getRoleList()]);	
 	} catch (err) {
-		console.log(err, 'error');
+		console.log(err, 'Sorry but but something went wrong... ');
 	}
 }
 

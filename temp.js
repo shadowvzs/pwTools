@@ -3,7 +3,12 @@ const { WritePacket, ReadPacket } = require('./Packets.js');
 
 async function main(userId = 32) { 
 	try {
-
+		// save the sent data
+		//fs.writeFile('guilds1.txt', resp.toString('hex'), function (err) {
+		//	if (err) { return console.log(err); }
+		//	console.log('files saved');
+		//});		
+		
 		// list online players (user_id, role_id, name etc)
 		// const GMComponent = require('./GM.js');
 		// const GM = new GMComponent(1024);

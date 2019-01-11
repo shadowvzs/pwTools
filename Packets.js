@@ -150,9 +150,6 @@ class WritePacket {
 	
 }
 
-/* ReadPackets not done !!!! */
-// 3203 1731
-// 3200 1730
 class ReadPacket {
 
 	// create a bufer from data
@@ -232,21 +229,24 @@ class ReadPacket {
 		return value;
 	}
 	
+	
 	// read array based on scheme/structure
 	ReadArray(scheme) {
 		//since not exist reference value in array this cloning is enough
-		const schemeClone = [...scheme];
-		const length = this['Read'+schemeClone.shift()[1]]();
+		scheme = [...scheme];
+		const length = this['Read'+scheme.shift()[1]]();
 		const items = [];
-
 		for(let i = 0; i < length; i++) {
-			const item = schemeClone.reduce((item, [name, type]) => {
-				item[name] = this['Read'+type]();
+				const item = scheme.reduce((item, [name, type]) => {
+				if (typeof type === "string") {
+					item[name] = this['Read'+type]();
+				} else {
+					item[name] = this['Read'+type[0]](type[1]);
+				}
 				return item;
 			}, {});
 			items.push(item);
 		}	
-
 		return items;		
 	}	
 		
@@ -260,9 +260,13 @@ class ReadPacket {
 		for (const keys in scheme) {
 			result[keys] = {};
 			const prop = result[keys];
-			
 			for (const [name, type] of scheme[keys]) {
 				try {
+					
+					if (scheme[keys][0] === "Array") {
+						return this.ReadArray(scheme[keys][1]);
+					}			
+
 					prop[name] = typeof type === "string" 
 						? this[`Read${type}`]() 
 						: this.ReadArray(type[1]);
