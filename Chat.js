@@ -35,7 +35,7 @@ class Chat {
 		packet.WriteUByte(channelId || this.channelId)		// roleId
 		packet.WriteUByte(this.emoticonId)		  			// roleId
 		packet.WriteUInt32(roleId || this.roleId)		  	// roleId
-		packet.WriteUString(msg)		  					// roleId
+		packet.WriteString(msg)		  					// roleId
 		packet.WriteOctets(""); 							// allways
 		packet.Pack(0x78);							  		// pack opcode and length
 		packet.Send();

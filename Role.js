@@ -62,6 +62,19 @@ class Role {
 		console.log(this.roleId, ' save request was sent')		
 	}
 	
+	async ban(duration = 3600, banType = 100, reason = "", bannerGM = -1) {
+		//ban types: 100-role, 101-chat,102-?,103-?
+		const packet = new WritePacket(29100);			
+		packet.WriteUByte(banType); 
+		packet.WriteUInt32(bannerGM)		  			// gm id
+		packet.WriteUInt32(0); 							// localsid
+		packet.WriteUInt32(this.roleId); 				// target id
+		packet.WriteUInt32(duration); 					// time
+		packet.WriteString(reason); 					// allways
+		packet.Pack(0x16E);							  	// pack opcode and length
+		packet.Send();		
+	}
+	
 	async load() {
 		let role;
 		const packet = new WritePacket(29400);			

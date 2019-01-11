@@ -17,7 +17,7 @@ const forbiddenScheme = [
 	[ "type", "UByte" ],
 	[ "time", "UInt32" ],
 	[ "create_time", "UInt32" ],
-	[ "reason", "UString" ]
+	[ "reason", "String" ]
 ];
 
 const roleScheme = {
@@ -30,7 +30,7 @@ const roleScheme = {
 	base: [
 		[ "version", "UByte" ],
 		[ "id", "UInt32" ],
-		[ "name", "UString" ],
+		[ "name", "String" ],
 		[ "race", "UInt32" ],
 		[ "cls", "UInt32" ],
 		[ "gender", "UByte" ],

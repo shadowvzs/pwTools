@@ -24,7 +24,7 @@ class WritePacket {
 	// convert integer to byte
 	WriteUByte(value, method = "push") {
 		const buf = Buffer.allocUnsafe(1);
-		value === -1 && (value = 0xff);
+		value < 0 && (value = 0xff - 1 - value);
 		buf.writeUInt8(value, 0);
 		this.data[method](...this.format(buf));
 	}
@@ -32,7 +32,7 @@ class WritePacket {
 	// write 2 byte, ex: 00 00
 	WriteUInt16(value, method = "push") {
 		const buf = Buffer.allocUnsafe(2);
-		value === -1 && (value = 0xffff);
+		value < 0 && (value = 0xffff - 1 - value);
 		buf.writeUInt16BE(value, 0);
 		this.data[method](...this.format(buf));
 	}
@@ -40,7 +40,7 @@ class WritePacket {
 	// write 4 byte, ex: 00 00 00 00
 	WriteUInt32(value, method = "push") {
 		const buf = Buffer.allocUnsafe(4);
-		value === -1 && (value = 0xffffffff);
+		value < 0 && (value = 0xffffffff - 1 - value);
 		buf.writeUInt32BE(value, 0);
 		this.data[method](...this.format(buf));
 	}
@@ -64,7 +64,7 @@ class WritePacket {
 	}
 	
 	// convert string into bytes, ex: utf8 - 0a, utf16le - 00 0a
-	WriteUString(value = "", coding = "utf16le") {
+	WriteString(value = "", coding = "utf16le") {
 		if (!value) {
 			return this.WriteUByte(0);
 		}
@@ -83,7 +83,7 @@ class WritePacket {
 		} else if ($value <= 0x1FFFFFFF) {
 			return this.WriteUInt32(value + 0xC0000000, method);
 		} else {
-			return this.WriteUByte653(0xE0, method) || this.WriteUInt32(value, method);
+			return this.WriteUByte(0xE0, method) || this.WriteUInt32(value, method);
 		}
 	}
 	
@@ -204,7 +204,7 @@ class ReadPacket {
 	}
 	
 	// read out utf16 string
-	ReadUString() {
+	ReadString() {
 		const length = this.ReadCUInt32(),
 			data = this.buf.toString('utf16le', this.pos, this.pos+length);
 		this.pos += length;
@@ -261,19 +261,19 @@ class ReadPacket {
 			result[keys] = {};
 			const prop = result[keys];
 			
-				for (const [name, type] of scheme[keys]) {
-					try {
-						prop[name] = typeof type === "string" 
-							? this[`Read${type}`]() 
-							: this.ReadArray(type[1]);
-					} catch (err) {
-						return {
-							error: err,
-							key: keys,
-							name: name
-						}
+			for (const [name, type] of scheme[keys]) {
+				try {
+					prop[name] = typeof type === "string" 
+						? this[`Read${type}`]() 
+						: this.ReadArray(type[1]);
+				} catch (err) {
+					return {
+						error: err,
+						key: keys,
+						name: name
 					}
 				}
+			}
 			
 		}
 		return result;

@@ -1,7 +1,7 @@
 const userRoleList = [
 	[ "count", "CUInt32" ],
 	[ "id", "UInt32" ],
-	[ "name", "UString" ]
+	[ "name", "String" ]
 ];
 
 const userRoleListScheme = {
