@@ -3,32 +3,56 @@ const { WritePacket, ReadPacket } = require('./Packets.js');
 
 async function main(userId = 32) { 
 	try {
-		const GuildComponent = require('./Guild.js');
-		const Guild = new GuildComponent();
-		const guildLists = await Guild.getGuilds();
-		console.log(guildLists[2]);
 
+		// list all territory land with their infos like color, owner, attack time, level
+		// const TWComponent = require('./Territory.js');
+		// const TW = new TWComponent();
+		// const TWList = await TW.getList();
+		// console.log( TWList );
+
+		// NOTE: Do note replace guild master if you don't know how to do it!!
+		// first candidate must be guild master and only after that need downgrade the old guild master!
+		// also players must login for refresh the guild list
+		// const GuildComponent = require('./Guild.js');
+		// const Guild = new GuildComponent(5);
+		// const guildLists = await Guild.getGuilds(); 		// list every guild
+		// console.log(guildLists);
+		// const guildInfo = await Guild.load();				// list the current guild
+		// console.log(guildInfo);
+		// set role 1029 to guild master poisition in faction id 5
+		// await Guild.setRoleRank(1040, 2);				// change guild member rank
+		
 		// list online players (user_id, role_id, name etc)
 		// const GMComponent = require('./GM.js');
 		// const GM = new GMComponent(1024);
 		// const onlineList = await GM.getOnlineList();
 		// console.log( onlineList );
 
-		// list user roles
+		// list user roles, set user gold, get user info
 		// const UserComponent = require('./User.js');
 		// const User = new UserComponent(32);
 		// const roleList = await User.getRoleList();
 		// console.log(roleList);
 		// User.setGold(5000);
+		// const userInfo = await User.getInfo();
+		// console.log(userInfo);
 		
-		//const RoleComponent = require('./Role.js');
-		//const Role = new RoleComponent(1030);
+		// const RoleComponent = require('./Role.js');
+		// const Role = new RoleComponent(1029);
+		
+		// get which guild is this role (get guild id, title and rank in guild)
+		// const roleGuild = await Role.getGuild();
+		// console.log(roleGuild);
+
 		// ban this role
 		// Role.ban();
 		// time, type, reason. gm id (could be -1 too)
 		// Role.ban(3600, 101, "Chat ban", 1024);
 		
-		// this example for load role data
+		// rename role
+		// Role.rename("Hello");
+		
+		// this example for load & save role data
 		// or const role = await Role.load();
 		//await Role.load();
 		//console.log(Role.data.role.base)
@@ -58,7 +82,7 @@ async function main(userId = 32) {
 /*
 
 const MailComponent = require('./Mail.js');
-const Mail = new MailComponent({ target_id: 1030 } );
+const Mail = new MailComponent({ target_id: 1047 } );
 
  Mail.sendSysMail();
  Mail.sendGold(2000);
@@ -66,7 +90,7 @@ const Mail = new MailComponent({ target_id: 1030 } );
 // send item too
 const newMailOptions = {
 	sender_id: 32,
-	target_id: 1030,
+	target_id: 1047,
 	title: "New Mail",
 	message: "We send an item with mail!",
 	item_id: 25957,

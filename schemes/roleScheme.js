@@ -137,5 +137,27 @@ const roleScheme = {
 		[ "items", ["Array", itemScheme] ]
 	]
 };
+
+const roleGuild = {
+	protocol: [
+		[ "op_code", "CUInt32" ],
+		[ "length", "CUInt32" ],
+		[ "unknown", "UInt32" ],
+		[ "ret_code", "UInt32" ],
+	],
+	details: [
+		[ "role_id", "UInt32" ],
+		[ "name", "String" ],
+		[ "guild_id", "UInt32" ],
+		[ "cls", "UByte" ],
+		[ "rank", "UByte" ],
+		[ "unknown", "UByte" ],
+		[ "extend", "Octets" ],
+		[ "title", "String" ],
+	]
+};
 		
-module.exports = roleScheme;
+module.exports = {
+	roleScheme, 
+	roleGuild
+};

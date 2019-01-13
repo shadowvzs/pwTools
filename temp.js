@@ -1,6 +1,105 @@
 const fs = require('fs');
 const { WritePacket, ReadPacket } = require('./Packets.js');
 
+
+
+const mailListScheme = {
+	protocol: [
+		[ "op_code", "CUInt32" ],
+		[ "length", "CUInt32" ],
+		[ "ret_code", "UInt32" ],
+		[ "cash", "UInt32" ],
+		[ "money", "UInt32" ],
+		[ "cash_add", "UInt32" ],
+		[ "cash_add1", "UInt32" ],
+		[ "cash_add2", "UInt32" ],
+		[ "cash_add3", "UInt32" ],
+	],
+	mail: [
+		/*
+		[ "tid", "UInt32" ],
+		[ "sender_id", "UInt32" ],
+		[ "sys_type", "UByte" ],
+		[ "target_id", "UInt32" ],
+		[ "title", "String" ],
+		[ "message", "String" ],
+		[ "item_id", "UInt32" ],
+		[ "pos", "UInt32" ],
+		[ "count", "UInt32" ],
+		[ "max_count", "UInt32" ],
+		[ "octet", "Octets" ],
+		[ "proctype", "UInt32" ],
+		[ "expire", "UInt32" ],
+		[ "guid1", "UInt32" ],
+		[ "guid2", "UInt32" ],
+		[ "mask", "UInt32" ],
+		[ "gold", "UInt32" ],
+		*/
+	]
+};
+
+const itemScheme = [
+	[ "length", "CUInt32" ],
+	[ "id", "UInt32" ],
+	[ "pos", "UInt32" ],
+	[ "count", "UInt32" ],
+	[ "max_count", "UInt32" ],
+	[ "data", "Octets" ],
+	[ "proctype", "UInt32" ],
+	[ "expire_date", "UInt32" ],
+	[ "guid1", "UInt32" ],
+	[ "guid2", "UInt32" ],
+	[ "mask", "UInt32" ]			
+];
+
+const territoryInfo = [
+ 		[ "length", "CUInt32" ],
+ 		[ "id", "UInt16" ],
+		[ "level", "UInt16" ],
+		[ "owner", "UInt32" ],
+		[ "occupy_time", "UInt32" ],
+		[ "challenger", "UInt32" ],
+		[ "deposit", "UInt32" ],
+		[ "cutoff_time", "UInt32" ],
+		[ "battle_time", "UInt32" ],
+		[ "bonus_time", "UInt32" ],
+		[ "color", "UInt32" ],
+		[ "status", "UInt32" ],
+		[ "timeout", "UInt32" ],
+		[ "max_bonus", "UInt32" ],
+		[ "unknown1", "UInt32" ],
+		[ "unknown2", "UInt32" ]
+]
+
+const guildDetailsScheme = {
+	protocol: [
+		[ "op_code", "CUInt32" ],
+		[ "length", "CUInt32" ],
+		[ "unknown", "UInt32" ],
+		[ "ret_code", "UInt16" ],
+	],
+	territory: [ "Array", territoryInfo ]
+};
+
+
+	/*
+		const packet = new WritePacket(29400);
+		packet.WriteUInt32(-1);							// roleid			
+		packet.WriteUInt32(1);							// roleid			
+		packet.Pack(863);		
+		const resp = await packet.Send();	
+		const t = (new ReadPacket(resp)).UnpackAll(guildDetailsScheme);
+		console.log('response: ',resp);
+		console.log('decoded', t);
+	*/
+	
+		// list online players (user_id, role_id, name etc)
+		 const TWComponent = require('./Territory.js');
+		 const TW = new TWComponent();
+		 const TWList = await TW.getList();
+		 console.log( TWList );
+
+
 async function main(userId = 32) { 
 	try {
 		// save the sent data
@@ -38,19 +137,22 @@ async function main(userId = 32) {
 		//Role.data.role.status.level = 6;
 		// 6lv = 25 str 0 stat else crash - con int str agi hp mp 
 /* 
+	    -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       - 
+190000000500000005000000050000004b0000002d0000000300000002000000000000400000a040000040400000a04000000000010000000100000010000000000020400000000000000000000000000000000000000000000000000000000000000000000000000000000001000000010000000000000000000000000000000000000000000000010000000000000000000000
+
 19000000 con
-05000000 int
+05000000 int 
 05000000 str
 05000000 agi
 4b000000 hp
 2d000000 mp
-03000000 
-02000000 
-00000040 
-0000a040 
-00004040 
-0000a040 
-00000000 
+03000000
+02000000
+00000040 - ??
+0000a040 - run speed ?
+00004040 - ??
+0000a040 - ? run speed
+00000000
 01000000
 01000000
 10000000
@@ -75,6 +177,7 @@ async function main(userId = 32) {
 01000000
 00000000
 00000000 - chi? 99/199/299/399 -  63000000/c7000000/2b010000/8f010000 
+
 */
 
 /*

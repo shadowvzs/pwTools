@@ -1,5 +1,5 @@
 const { WritePacket, ReadPacket } = require('./Packets.js');
-const roleScheme = require('./schemes/roleScheme.js');
+const { roleScheme, roleGuild } = require('./schemes/roleScheme.js');
 
 class Role {
 	
@@ -35,6 +35,20 @@ class Role {
 		return defaultRoles[cls] || 0;
 	}
 	
+	async getGuild(roleId = null) {
+		let guild;
+		if (!this.roleId) { return console.log('Role id missing'); }
+		const packet = new WritePacket(29400);
+		packet.WriteUInt32(-1);							// localsid			
+		packet.WriteUInt32(1);										
+		packet.WriteUInt32(1040);						// role id	
+		packet.Pack(0x11ff);		
+		this.data.guild = (new ReadPacket(await packet.Send()))
+					.UnpackAll(roleGuild)
+					.details;	
+		return this.data.guild;
+	}
+		
 	async delete(hard = false) {
 		if (!this.roleId) { return; }
 		console.log(this.roleId, ' delete request sent')
@@ -72,10 +86,24 @@ class Role {
 		packet.WriteUInt32(duration); 					// time
 		packet.WriteString(reason); 					// allways
 		packet.Pack(0x16E);							  	// pack opcode and length
-		packet.Send();		
+		return packet.Send();		
 	}
 	
-	async load() {
+	async rename(newName) {
+		let role;
+		if (!this.roleId) { return console.log('Role id missing'); }
+		if (!this.data.base) { await this.load(); }
+		const packet = new WritePacket(29400);			
+		packet.WriteUInt32(-1); 							// allways
+		packet.WriteUInt32(this.roleId)		  				// roleId
+		packet.WriteString(this.data.role.base.name);		// old name	
+		packet.WriteString("newname");						// new name
+		packet.Pack(0xd4c);							  		// pack opcode and length
+		return await packet.Send();
+	}
+	
+	async load(id = null) {
+		id && (this.roleId = id);
 		let role;
 		const packet = new WritePacket(29400);			
 		packet.WriteUInt32(-1); 							  	// allways

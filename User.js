@@ -1,5 +1,5 @@
 const { WritePacket, ReadPacket } = require('./Packets.js');
-const { userRoleListScheme } = require('./schemes/userScheme.js');
+const { userRoleListScheme, userInfoScheme } = require('./schemes/userScheme.js');
 
 class User {
 	
@@ -20,6 +20,19 @@ class User {
 		this.data.roleList = roleList;
 		return roleList;
 	}
+	
+	async getInfo(userId = null) {
+		let info;
+		const packet = new WritePacket(29400);			
+		packet.WriteUInt32(-1); 							  	// allways
+		packet.WriteUInt32(userId || this.userId)		  		// userId
+		packet.Pack(0xbba);							  			// pack opcode and length
+		info = (new ReadPacket(await packet.Send()))
+							.UnpackAll(userInfoScheme)
+							.info;
+		this.data.info = info;
+		return info;
+	}	
 	
 	setGold(amount) {
 		// Warning: this not add cubi/gold, this set the cubi/gold but instant!

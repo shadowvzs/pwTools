@@ -143,7 +143,7 @@ class WritePacket {
 			// if error handler
 			this.client.on('error', data => {
 				this.client.destroy(); 
-				return reject(err || 'Error: Cannot connect to server');
+				return reject('Error: Cannot connect to server!');
 			});			
 		});
 	}
