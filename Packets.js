@@ -3,9 +3,17 @@ const host = "127.0.0.1";
 
 class WritePacket {
 
-	constructor(port = null) {
-		this.queue = [];	// queue list if too much packet
-		this.data = [];		// current binary packet array
+	constructor(data = null) {
+		let port;
+		this.queue = [];							// queue list if too much packet
+		this.data = [];								// current binary packet array
+		if (typeof data === "number") {
+			port = data;
+		} else {
+			this.scheme = JSON.parse(JSON.stringify(data));
+			this.protocol = data.protocol;
+			port = this.protocol.port;
+		}
 		this.client = net.connect({ host, port });		// open connection between server and client
 	}
 
@@ -56,10 +64,10 @@ class WritePacket {
 	WriteOctets(value = "") {
 		if (value && value.match(/[0-9A-Fa-f]/g)) {
 			value = value.match(/.{2}/g).map(e => '0x'+e);
-			this.WriteCUInt32(value.length);
+			this.WriteCUInt(value.length);
 			this.data.push(...value);
 		} else {
-			this.WriteCUInt32(0);
+			this.WriteCUInt(0);
 		}
 	}
 	
@@ -69,12 +77,12 @@ class WritePacket {
 			return this.WriteUByte(0);
 		}
 		const buf = this.format(Buffer.from(value, coding));
-		this.WriteCUInt32(buf.length);
+		this.WriteCUInt(buf.length);
 		this.data.push(...buf);
 	}
 	
 	// convert number ( could be 1, 2 or 4 byte) 
-	WriteCUInt32(value, method = "push") {
+	WriteCUInt(value, method = "push") {
 
 		if (value <= 0x7F) { 
 			return this.WriteUByte(value, method);
@@ -90,14 +98,14 @@ class WritePacket {
 	// insert opcode and length to the begining of data
 	Pack(value) {
 		const len = this.data.length;
-		this.WriteCUInt32(len, "unshift");
-		this.WriteCUInt32(value, "unshift");
+		this.WriteCUInt(len, "unshift");
+		this.WriteCUInt(value, "unshift");
 	}
 
 	// write array based on array scheme and data
 	WriteArray(scheme, data) {
 		// first we save the array length
-		this.WriteCUInt32(data.length);
+		this.WriteCUInt(data.length);
 		for (const item of data) {
 			for (const [name, type] of scheme) {
 				// length used only for read
@@ -108,14 +116,13 @@ class WritePacket {
 	}
 	
 	// packall common data (few init data from protocol is exception)
-	PackAll(scheme, data, protocol) {
+	PackAll(data) {
 		// we ignore the protocol from scheme, acctually it was used only for read
-		const keys = Object.keys(scheme).shift();
-		delete data.protocol;
-
+		const scheme = this.scheme;
+		
 		for (const category in scheme) {
 
-			if (category === "protocol") { continue; }
+			if (category === "protocol" || category === "misc") { continue; }
 			const fields = scheme[category];
 			for (const [field, type] of fields) {
 				const value = data[category][field];
@@ -127,8 +134,19 @@ class WritePacket {
 				}
 			}
 		}
-		this.Pack(protocol);
+		this.Pack(this.protocol.request);
 		return this.Send();
+	}
+
+	async Request(readScheme = null) {
+		let raw = await this.Send(); 		// raw binary buffer
+		const pos = raw.indexOf(this.protocol.response, 0, "hex");
+		!readScheme && (readScheme = this.scheme);
+		console.log(raw);
+		pos > 0 && (raw = raw.slice(pos));
+		const reader = new ReadPacket(raw, readScheme);
+		const response = reader.UnpackAll();
+		return response;
 	}
 
 	// send data to server if we can, else add to queue list
@@ -153,9 +171,23 @@ class WritePacket {
 class ReadPacket {
 
 	// create a bufer from data
-	constructor(data = null) {
+	constructor(data = null, scheme = null) {
 		this.buf = Buffer.from(data, 'binary');
-        this.pos = 0;
+        	this.pos = 0;
+        	if (scheme) {
+			this.protocol = scheme.protocol;
+			delete scheme.protocol;
+        		this.scheme = scheme;
+		}
+        	
+	}
+	
+	ReadHeader() {
+		return {
+			opCode: this.ReadCUInt(),
+			length: this.ReadCUInt(),
+			retCode: this.ReadUInt32()
+		}
 	}
 	
 	ReadBytes(length) {
@@ -194,7 +226,7 @@ class ReadPacket {
 	
 	// read out octets (first number is the length, then we extract string in hexdec form)
 	ReadOctets() {
-		const length = this.ReadCUInt32(),
+		const length = this.ReadCUInt(),
 			data = this.buf.toString('hex', this.pos, this.pos+length);
 		this.pos += length;
 		return data;
@@ -202,14 +234,14 @@ class ReadPacket {
 	
 	// read out utf16 string
 	ReadString() {
-		const length = this.ReadCUInt32(),
+		const length = this.ReadCUInt(),
 			data = this.buf.toString('utf16le', this.pos, this.pos+length);
 		this.pos += length;
 		return data;
 	}
 	
 	// read dynamic length data
-	ReadCUInt32() {
+	ReadCUInt() {
 		let value = this.ReadUByte();
 		switch(value & 0xE0) {
 			case 0xE0:
@@ -254,9 +286,10 @@ class ReadPacket {
 		this.pos += value;
 	}
 	
-	UnpackAll(scheme, data = null) {
+	UnpackAll() {
+		const scheme = this.scheme;
 		const result = {};
-
+		this.protocol && (result.protocol = this.ReadHeader());
 		for (const keys in scheme) {
 			result[keys] = {};
 			const prop = result[keys];

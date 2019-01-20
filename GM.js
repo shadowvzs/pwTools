@@ -16,20 +16,19 @@ class GM {
 		packet.WriteUInt32(0); 							// localsid
 		packet.WriteUInt32(target_id); 					// target id
 		packet.WriteUInt32(duration); 					// time
-		packet.WriteString(reason); 					// allways
-		packet.Pack(0x16E);							  	// pack opcode and length
+		packet.WriteString(reason); 						// allways
+		packet.Pack(0x16E);							// pack opcode and length
 		packet.Send();		
 	}
 	
 	async getOnlineList() {
-		const packet = new WritePacket(29100);	
-		packet.WriteUInt32(1); 				// localsid
-		packet.WriteUInt32(this.roleId);	// gm_role_id
+		const packet = new WritePacket(onlineListScheme);	
+		packet.WriteUInt32(-1); 				// localsid
+		packet.WriteUInt32(this.roleId);		// gm_role_id
 		packet.WriteUInt32(1); 				// source ?
 		packet.WriteOctets("31"); 			// idk ?
-		packet.Pack(0x160);					// pack opcode and length		
-		const response = await packet.Send();
-		this.data.onlineList = (new ReadPacket(response)).UnpackAll(onlineListScheme).base;
+		packet.Pack(0x160);				// pack opcode and length		
+		this.data.onlineList = (await packet.Request()).base;
 		return this.data.onlineList;
 	}
 	

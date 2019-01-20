@@ -1,0 +1,13 @@
+gdb is open source program and very helpfull for debug the binary files from server files (gdelivery, gamedb the most important ones)
+
+installation on linux (i use at moment debian based distro)
+
+sudo apt-get install gdb
+
+then how to get protocol number?
+
+1. gdb ./gdelivery    - open binary file
+2. ptype ProtocolType - all protocol
+3. ptype GetMail      - GetMail is camel cased protocol name from previous list
+
+so we got the protocol id (4204 = 0x106c) and we get the structure for request like int, localsid, unsigned char (byte)     

@@ -1,11 +1,26 @@
 const { WritePacket, ReadPacket } = require('./Packets.js');
-const { roleScheme, roleGuild } = require('./schemes/roleScheme.js');
+const { 
+	putRoleScheme, 
+	getRoleScheme, 
+	roleGuildScheme, 
+	getIdScheme 
+} = require('./schemes/roleScheme.js');
 
 class Role {
 	
 	constructor(roleId) {
 		this.data = {};
 		roleId && (this.roleId = roleId);
+	}
+	
+	async getId(name) {
+		const packet = new WritePacket(getIdScheme);
+		packet.WriteUInt32(-1);							// localsid		
+		packet.WriteString(name);						// role name			
+		packet.WriteUByte(0);							// unknown			
+		packet.Pack(0x0bd9);		
+		const role_id = (await packet.Request()).base.role_id;
+		return (role_id > 0 && role_id < 0x7fffffff) ? role_id : false;		
 	}
 	
 	async reset() {
@@ -38,14 +53,12 @@ class Role {
 	async getGuild(roleId = null) {
 		let guild;
 		if (!this.roleId) { return console.log('Role id missing'); }
-		const packet = new WritePacket(29400);
+		const packet = new WritePacket(roleGuildScheme);
 		packet.WriteUInt32(-1);							// localsid			
-		packet.WriteUInt32(1);										
-		packet.WriteUInt32(1040);						// role id	
+		packet.WriteUInt32(1);							// unknown			
+		packet.WriteUInt32(this.roleId);					// role id	
 		packet.Pack(0x11ff);		
-		this.data.guild = (new ReadPacket(await packet.Send()))
-					.UnpackAll(roleGuild)
-					.details;	
+		this.data.guild = (await packet.Request()).details;
 		return this.data.guild;
 	}
 		
@@ -59,7 +72,7 @@ class Role {
 		}
 		
 		const packet = new WritePacket(29100);			
-		packet.WriteUInt32(this.roleId)		  					// roleId
+		packet.WriteUInt32(this.roleId)		  				// roleId
 		packet.WriteUInt32(-1); 							  	// allways
 		packet.Pack(0x56);							  		// pack opcode and length
 		packet.Send();
@@ -68,11 +81,11 @@ class Role {
 	
 	async save() {
 		if (!this.data.role) { return console.log('Missing id or data!'); }
-		const packet = new WritePacket(29400);			
+		const packet = new WritePacket(putRoleScheme);			
 		packet.WriteUInt32(-1); 							  	// allways
-		packet.WriteUInt32(this.roleId)		  					// roleId
-		packet.WriteUByte(1); 									// overwrite		
-		packet.PackAll(roleScheme, this.data.role, 0x1F42);
+		packet.WriteUInt32(this.roleId)		  				// roleId
+		packet.WriteUByte(1); 								// overwrite		
+		packet.PackAll(this.data.role);
 		console.log(this.roleId, ' save request was sent')		
 	}
 	
@@ -82,11 +95,11 @@ class Role {
 		packet.WriteUByte(banType); 
 		packet.WriteUInt32(bannerGM)		  			// gm id
 		packet.WriteUInt32(0); 							// localsid
-		packet.WriteUInt32(this.roleId); 				// target id
+		packet.WriteUInt32(this.roleId); 					// target id
 		packet.WriteUInt32(duration); 					// time
-		packet.WriteString(reason); 					// allways
+		packet.WriteString(reason); 						// allways
 		packet.Pack(0x16E);							  	// pack opcode and length
-		return packet.Send();		
+		return await packet.Send();		
 	}
 	
 	async rename(newName) {
@@ -95,22 +108,22 @@ class Role {
 		if (!this.data.base) { await this.load(); }
 		const packet = new WritePacket(29400);			
 		packet.WriteUInt32(-1); 							// allways
-		packet.WriteUInt32(this.roleId)		  				// roleId
+		packet.WriteUInt32(this.roleId)		  			// roleId
 		packet.WriteString(this.data.role.base.name);		// old name	
-		packet.WriteString("newname");						// new name
-		packet.Pack(0xd4c);							  		// pack opcode and length
+		console.log('name', this.data.role.base.name)
+		packet.WriteString(newName);					// new name
+		packet.Pack(0xd4c);							// pack opcode and length
 		return await packet.Send();
 	}
 	
 	async load(id = null) {
 		id && (this.roleId = id);
 		let role;
-		const packet = new WritePacket(29400);			
-		packet.WriteUInt32(-1); 							  	// allways
+		const packet = new WritePacket(getRoleScheme);			
+		packet.WriteUInt32(-1); 							  		// allways
 		packet.WriteUInt32(this.roleId)		  					// roleId
 		packet.Pack(0x1F43);							  		// pack opcode and length
-		role = (new ReadPacket(await packet.Send()))
-							.UnpackAll(roleScheme);
+		role = await packet.Request();
 		this.data.role = role;
 		console.log(this.roleId, ' was loaded')		
 		return role;

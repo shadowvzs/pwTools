@@ -1,5 +1,5 @@
 const itemScheme = [
-	[ "length", "CUInt32" ],
+	[ "length", "CUInt" ],
 	[ "id", "UInt32" ],
 	[ "pos", "UInt32" ],
 	[ "count", "UInt32" ],
@@ -13,20 +13,22 @@ const itemScheme = [
 ];
 
 const forbiddenScheme = [
-	[ "length", "CUInt32" ],
+	[ "length", "CUInt" ],
 	[ "type", "UByte" ],
 	[ "time", "UInt32" ],
 	[ "create_time", "UInt32" ],
 	[ "reason", "String" ]
 ];
 
-const roleScheme = {
-	protocol: [
-		[ "op_code", "CUInt32" ],
-		[ "length", "CUInt32" ],
-		[ "unknown1", "UInt32" ],
+const getRoleScheme = {
+	protocol: {
+               port: 29400,
+               request: 0x1f43,
+               response: "9f43"
+	},	
+	misc: [
 		[ "ret_code", "UInt32" ],
-	],
+	],	
 	base: [
 		[ "version", "UByte" ],
 		[ "id", "UInt32" ],
@@ -51,7 +53,7 @@ const roleScheme = {
 		[ "reserved4", "UByte" ]
 	],
 	status: [
-		[ "version", "CUInt32" ],
+		[ "version", "CUInt" ],
 		[ "level", "UInt32" ],
 		[ "culti", "UInt32" ],
 		[ "exp", "UInt32" ],
@@ -119,8 +121,8 @@ const roleScheme = {
 		[ "capacity", "UInt32" ],
 		[ "gold", "UInt32" ],
 		[ "items", ["Array", itemScheme ] ],
-		[ "materials_capacity", "CUInt32"],
-		[ "fashion_capacity", "CUInt32"],
+		[ "materials_capacity", "CUInt"],
+		[ "fashion_capacity", "CUInt"],
 		[ "materials", ["Array", itemScheme ] ],
 		[ "fashions", ["Array", itemScheme ] ],
 		// if version is 1.5.1+ then
@@ -138,13 +140,21 @@ const roleScheme = {
 	]
 };
 
-const roleGuild = {
-	protocol: [
-		[ "op_code", "CUInt32" ],
-		[ "length", "CUInt32" ],
-		[ "unknown", "UInt32" ],
+const putRoleScheme = Object.assign({}, getRoleScheme, {protocol: {
+       port: 29400,
+       request: 0x1f42,
+       response: "9f42"
+}});
+
+const roleGuildScheme = {
+	protocol: {
+               port: 29400,
+               request: 0x11ff,
+               response: "91ff"
+	},	
+	misc: [
 		[ "ret_code", "UInt32" ],
-	],
+	],	
 	details: [
 		[ "role_id", "UInt32" ],
 		[ "name", "String" ],
@@ -156,8 +166,23 @@ const roleGuild = {
 		[ "title", "String" ],
 	]
 };
+
+const getIdScheme = {
+	protocol: {
+               port: 29400,
+               request: 0x0bd9,
+               response: "8bd9"
+	},	
+	base: [ 
+		[ "localsid", "UInt32" ],
+		[ "role_id", "UInt32" ],
+	]
+};
+
 		
 module.exports = {
-	roleScheme, 
-	roleGuild
+	getRoleScheme,
+	putRoleScheme, 
+	roleGuildScheme,
+	getIdScheme
 };

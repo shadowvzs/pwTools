@@ -1,16 +1,24 @@
 const userRoleList = [
-	[ "count", "CUInt32" ],
+	[ "count", "CUInt" ],
 	[ "id", "UInt32" ],
 	[ "name", "String" ]
 ];
 
 const userRoleListScheme = {
 	protocol: [
-		[ "op_code", "CUInt32" ],
-		[ "length", "CUInt32" ],
+		[ "op_code", "CUInt" ],
+		[ "length", "CUInt" ],
 		[ "unknown1", "UInt32" ],
 		[ "ret_code", "UInt32" ],
 	],
+	protocol: {
+               port: 29400,
+               request: 0x0d49,
+               response: "8d49"
+	},		
+	misc: [
+		[ "ret_code", "UInt32" ],
+	],	
 	base: [
 		[ "roles", [ "Array", userRoleList ] ]
 	]
@@ -18,7 +26,7 @@ const userRoleListScheme = {
 
 
 const exp_log = [
-	[ "length", "CUInt32" ],
+	[ "length", "CUInt" ],
 	[ "tid", "UInt32" ],
 	[ "time", "UInt32" ],
 	[ "result", "UByte" ],
@@ -27,13 +35,13 @@ const exp_log = [
 ];
 
 const autolock = [
-	[ "length", "CUInt32" ],
+	[ "length", "CUInt" ],
 	[ "key", "UInt32" ],
 	[ "value", "UInt32" ],
 ];
 
 const forbidden = [
-	[ "length", "CUInt32" ],
+	[ "length", "CUInt" ],
 	[ "type", "UByte" ],
 	[ "time", "UInt32" ],
 	[ "created_time", "UInt32" ],
@@ -42,12 +50,13 @@ const forbidden = [
 
 
 const userInfoScheme = {
-	protocol: [
-		[ "op_code", "CUInt32" ],
-		[ "length", "CUInt32" ],
-		[ "unknown", "UInt32" ],
+	protocol: {
+               port: 29400,
+               request: 0x0bba,
+               response: "8bba"
+	},		
+	misc: [
 		[ "ret_code", "UInt32" ],
-
 	],
 	info: [
 		[ "role_id", "UInt32" ],		// rolessstart with this id (ex. 1024)

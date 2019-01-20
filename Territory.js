@@ -9,13 +9,11 @@ class Territory {
 	}
 	
 	async getList() {
-		const packet = new WritePacket(29400);
+		const packet = new WritePacket(territoriesScheme);
 		packet.WriteUInt32(-1);							// localsid			
 		packet.WriteUInt32(1);							// unknown		
 		packet.Pack(0x35f);		
-		this.data.list = (new ReadPacket(await packet.Send()))
-						.UnpackAll(territoriesScheme);
-		delete this.data.list.protocol;
+		this.data.list = (await packet.Request());
 		return this.data.list;
 	}
 	

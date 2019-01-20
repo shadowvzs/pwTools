@@ -10,26 +10,22 @@ class User {
 	
 	async getRoleList(userId = null) {
 		let roleList;
-		const packet = new WritePacket(29400);			
+		const packet = new WritePacket(userRoleListScheme);			
 		packet.WriteUInt32(-1); 							  	// allways
 		packet.WriteUInt32(userId || this.userId)		  		// userId
 		packet.Pack(0xD49);							  			// pack opcode and length
-		roleList = (new ReadPacket(await packet.Send()))
-							.UnpackAll(userRoleListScheme)
-							.base.roles;
+		roleList = (await packet.Request()).base.roles;
 		this.data.roleList = roleList;
 		return roleList;
 	}
 	
 	async getInfo(userId = null) {
 		let info;
-		const packet = new WritePacket(29400);			
+		const packet = new WritePacket(userInfoScheme);			
 		packet.WriteUInt32(-1); 							  	// allways
 		packet.WriteUInt32(userId || this.userId)		  		// userId
 		packet.Pack(0xbba);							  			// pack opcode and length
-		info = (new ReadPacket(await packet.Send()))
-							.UnpackAll(userInfoScheme)
-							.info;
+		info =  (await packet.Request()).info;
 		this.data.info = info;
 		return info;
 	}	

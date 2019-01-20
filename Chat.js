@@ -30,15 +30,15 @@ class Chat {
 		this.roleId = id;
 	}
 	
-	send(msg, channelId, roleId) {
-		const packet = new WritePacket(29300);			
-		packet.WriteUByte(channelId || this.channelId)		// roleId
-		packet.WriteUByte(this.emoticonId)		  			// roleId
+	async send(msg, channelId, roleId) {
+		const packet = new WritePacket(29300);					
+		packet.WriteUByte(channelId || this.channelId)		// chat channel id
+		packet.WriteUByte(this.emoticonId)		  		// emoticon id
 		packet.WriteUInt32(roleId || this.roleId)		  	// roleId
-		packet.WriteString(msg)		  					// roleId
-		packet.WriteOctets(""); 							// allways
-		packet.Pack(0x78);							  		// pack opcode and length
-		packet.Send();
+		packet.WriteString(msg)		  				// message
+		packet.WriteOctets(""); 							// allways, idk this
+		packet.Pack(0x78);							  	// pack opcode and length
+		const response = await packet.Send();
 		console.log(this.roleId, ' send '+msg);	
 	}
 }

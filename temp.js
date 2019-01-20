@@ -71,33 +71,21 @@ const territoryInfo = [
 		[ "unknown2", "UInt32" ]
 ]
 
+
+// upgrade
 const guildDetailsScheme = {
 	protocol: [
 		[ "op_code", "CUInt32" ],
 		[ "length", "CUInt32" ],
 		[ "unknown", "UInt32" ],
-		[ "ret_code", "UInt16" ],
 	],
-	territory: [ "Array", territoryInfo ]
+	territory: [ 
+		[ "unknown1", "UInt32" ],
+		[ "master_id", "UInt32" ],
+		//[ "unknown2", "UInt32" ],
+	//	[ "level", "UByte" ],
+	]
 };
-
-
-	/*
-		const packet = new WritePacket(29400);
-		packet.WriteUInt32(-1);							// roleid			
-		packet.WriteUInt32(1);							// roleid			
-		packet.Pack(863);		
-		const resp = await packet.Send();	
-		const t = (new ReadPacket(resp)).UnpackAll(guildDetailsScheme);
-		console.log('response: ',resp);
-		console.log('decoded', t);
-	*/
-	
-		// list online players (user_id, role_id, name etc)
-		 const TWComponent = require('./Territory.js');
-		 const TW = new TWComponent();
-		 const TWList = await TW.getList();
-		 console.log( TWList );
 
 
 async function main(userId = 32) { 
@@ -107,6 +95,63 @@ async function main(userId = 32) {
 		//	if (err) { return console.log(err); }
 		//	console.log('files saved');
 		//});		
+
+// create guild
+//$pack = pack("N", -1).$this->gamed->packString($rolename).pack("C", 1);
+
+		const packet = new WritePacket(29100);
+		packet.WriteUInt32(1030);							// role id		
+		packet.WriteUInt32(-1);								// localsid		
+		packet.Pack(0x106A);	
+			
+		const resp = await packet.Send();	
+		//const t = (new ReadPacket(resp)).UnpackAll(guildDetailsScheme);
+		console.log('response: ',resp);
+		//console.log('decoded', t);
+
+		/*
+		const GuildComponent = require('./Guild.js');
+		const Guild = new GuildComponent();
+		const g = await Guild.create("pista",1028);
+		console.log(g)
+		
+		*/
+		
+// need to test create/upgrade/delete	
+
+		
+		//const GuildComponent = require('./Guild.js');
+		//const Guild = new GuildComponent(8);
+
+		//await Guild.create("start", 1026);				// list the current guild
+		//await Guild.load();							// list the current guild
+		//await Guild.upgrade(2);						// list the current guild
+		//const guildInfo = await Guild.delete();		// list the current guild
+		//console.log(guildInfo);		
+/*
+upgrade
+		const packet = new WritePacket(29400);
+		packet.WriteUInt32(-1);					// localsid		
+		packet.WriteUInt32(6);					// guild id			
+		packet.WriteUInt32(1028);				// master role id
+		packet.WriteUInt32(0);					// unknown			
+		packet.WriteUByte(2);					// level			
+		packet.Pack(4610);		
+		const resp = await packet.Send();	
+		const t = (new ReadPacket(resp)).UnpackAll(guildDetailsScheme);
+		console.log('response: ',resp);
+		console.log('decoded', t);
+		
+		const GuildComponent = require('./Guild.js');
+		 const Guild = new GuildComponent(6);
+
+		 const guildInfo = await Guild.load();				// list the current guild
+		 console.log(guildInfo);	
+*/
+		
+		// get which guild is this role (get guild id, title and rank in guild)
+		// const roleGuild = await Role.getGuild();
+		// console.log(roleGuild);
 		
 		// list online players (user_id, role_id, name etc)
 		// const GMComponent = require('./GM.js');
@@ -121,8 +166,9 @@ async function main(userId = 32) {
 		// console.log(roleList);
 		// User.setGold(5000);
 		
-		const RoleComponent = require('./Role.js');
-		const Role = new RoleComponent(1047);
+		 const RoleComponent = require('./Role.js');
+		 const Role = new RoleComponent();
+		 console.log( await Role.getId("pista") );
 		// ban this role
 		// Role.ban();
 		// time, type, reason. gm id (could be -1 too)
@@ -130,11 +176,12 @@ async function main(userId = 32) {
 		
 		// this example for load role data
 		// or const role = await Role.load();
-		//await Role.load();
+		// await Role.load();
 		
 		// this example for change user inventory gold then save
-		//Role.data.role.inventory.gold = 8000;
-		//Role.data.role.status.level = 6;
+		// Role.data.role.inventory.gold = 10000000;
+		// Role.data.role.status.level = 60;
+		// Role.save();
 		// 6lv = 25 str 0 stat else crash - con int str agi hp mp 
 /* 
 	    -       -       -       -       -       -       -       -       -       -       -       -       -       -       -       - 

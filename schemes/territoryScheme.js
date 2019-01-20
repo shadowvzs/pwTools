@@ -1,5 +1,5 @@
 const territoryInfo = [
- 		[ "length", "CUInt32" ],
+ 		[ "length", "CUInt" ],
  		[ "id", "UInt16" ],
 		[ "level", "UInt16" ],
 		[ "owner", "UInt32" ],
@@ -18,10 +18,12 @@ const territoryInfo = [
 ]
 
 const territoriesScheme = {
-	protocol: [
-		[ "op_code", "CUInt32" ],
-		[ "length", "CUInt32" ],
-		[ "unknown", "UInt32" ],
+	protocol: {
+               port: 29400,
+               request: 0x035f,
+               response: "835f"
+	},		
+	misc: [
 		[ "ret_code", "UInt16" ],
 	],
 	list: [ "Array", territoryInfo ]

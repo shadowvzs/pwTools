@@ -1,5 +1,5 @@
 const guildListMembers = [
-	[ "length", "CUInt32" ],
+	[ "length", "CUInt" ],
 	[ "role_id", "UInt32" ],
 	[ "cls", "UByte" ]
 ];
@@ -20,19 +20,21 @@ const guildList = [
 ];
 
 const guildListScheme = {
-	protocol: [
-		[ "op_code", "CUInt32" ],
-		[ "length", "CUInt32" ],
-		[ "unknown1", "UInt32" ],
+	protocol: {
+               port: 29400,
+               request: 0x0bef,
+               response: "8bef"
+	},		
+	misc: [
 		[ "ret_code", "UInt32" ],
-		[ "unknown4", "UByte" ],
+		[ "unknown4", "UByte" ],	
 	],
 	guilds: [ "Array", guildList ]
 };
 
 
 const guildInfoMembers = [
-	[ "length", "CUInt32" ],
+	[ "length", "CUInt" ],
 	[ "role_id", "UInt32" ],
 	[ "level", "UByte" ],
 	[ "rank", "UByte" ],
@@ -45,12 +47,13 @@ const guildInfoMembers = [
 ];
 
 const guildInfoScheme = {
-	protocol: [
-		[ "op_code", "CUInt32" ],
-		[ "length", "CUInt32" ],
-		[ "unknown", "UInt32" ],
+	protocol: {
+               port: 29400,
+               request: 0x1200,
+               response: "9200"
+	},		
+	misc: [
 		[ "ret_code", "UInt32" ],
-
 	],
 	info: [
 		[ "id", "UInt32" ],

@@ -41,9 +41,9 @@ class MailSender {
 	}
 
 	async sendSysMail() {
-		const packet = new WritePacket(29100);			
-		await packet.PackAll(sysMailScheme, {sys: this.data.sysMsg}, 0x1076);
-		console.log(this.data.sysMsg.target_id, ' will reicive a sysMail!')	
+		const packet = new WritePacket(sysMailScheme);			
+		const response = await packet.PackAll({sys: this.data.sysMsg});
+		console.log(this.data.sysMsg.target_id, ' will reicive a sysMail!');
 	}
 }
 

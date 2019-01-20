@@ -1,10 +1,9 @@
 const sysMailScheme = {
-	protocol: [
-		[ "op_code", "CUInt32" ],
-		[ "length", "CUInt32" ],
-		[ "unknown1", "UInt32" ],
-		[ "ret_code", "UInt32" ],
-	],
+	protocol: {
+               port: 29100,
+               request: 0x1076,
+               response: "8077"
+	},
 	sys: [
 		[ "tid", "UInt32" ],
 		[ "sender_id", "UInt32" ],
